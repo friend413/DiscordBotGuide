@@ -6,7 +6,6 @@ const UserSchema = new mongoose.Schema({
         required: true
     },
     avatar: String,
-    email: String,
     global_name: String,
     id: {
         type: String,
@@ -16,7 +15,13 @@ const UserSchema = new mongoose.Schema({
     ip_address: {
         type: [String],
         default: [],
+    },
+    payment: {
+        type: Object,
+        default: null
     }
 });
 
-export const User = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
+
+export { User }

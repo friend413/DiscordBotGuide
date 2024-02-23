@@ -90,15 +90,30 @@ const PAYMENT_COMMAND = {
   description: 'Access your payment',
   options: [
     {
-      name: 'info',
+      name: 'address',
       description: 'Get your payment info',
       type: 1,
     },
     {
-      name: 'address',
+      name: 'balance',
       description: 'Get your payment address',
       type: 1,
-    }
+    },
+    {
+      name: 'enddate',
+      description: 'Get your payment address',
+      type: 1,
+    },
+    {
+      name: 'paysol',
+      description: 'Pay with Sol',
+      type: 1,
+    },
+    {
+      name: 'payseigma',
+      description: 'Pay with Seigma',
+      type: 1,
+    },
   ]
 }
 

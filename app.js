@@ -8,8 +8,10 @@ import {
   ButtonStyleTypes,
 } from 'discord-interactions';
 import { VerifyDiscordRequest, getRandomEmoji, DiscordRequest } from './utils.js';
-import { paymentAddress, paymentInfo } from './controllers/paymentCtrl.js';
+import { paymentAddress, paymentBalance, paymentEndDate, paymentSol, paymentSeigma } from './controllers/paymentCtrl.js';
 import { whitelistAdd, whitelistReset, whitelistRemove, whitelistShow } from './controllers/whitelistCtrl.js';
+import { initDB } from './utils/initializeDB.js';
+import { ROLES } from './utils/constants.js';
 // Create an express app
 const app = express();
 // Get port, or default to 2024
@@ -22,8 +24,7 @@ app.use(express.json({ verify: VerifyDiscordRequest(process.env.PUBLIC_KEY) }));
  */
 app.post('/interactions', async function (req, res) {
   // Interaction type and data
-  const { type, id, data } = req.body;
-  console.log(req.body)
+  const { type, id, data, member } = req.body;
   /**
    * Handle verification requests
    */
@@ -37,7 +38,6 @@ app.post('/interactions', async function (req, res) {
    */
   if (type === InteractionType.APPLICATION_COMMAND) {
     const { name } = data;
-    console.log('route', data);
     // "test" command
     if (name === 'test') {
       // Send a message into the channel where command was triggered from
@@ -49,20 +49,28 @@ app.post('/interactions', async function (req, res) {
         },
       });
     }
+    if( member.roles.includes(ROLES['nftHolder']) == false ){
+        return res.send({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+                content: `Pre: You have no access permission for this command.`,
+            },
+        })
+    }
     if (name === 'whitelist') {
       const { name, options } = data.options[0];
       switch (name) {
         case 'add':
-          await whitelistAdd(options, res)
+          await whitelistAdd({options, member}, res)
           break;
         case 'remove':
-          await whitelistRemove(options, res)
+          await whitelistRemove({options, member}, res)
           break;
         case 'reset':
-          await whitelistReset(options, res)
+          await whitelistReset({options, member}, res)
           break;
         case 'show':
-          await whitelistShow(options, res)
+          await whitelistShow({options, member}, res)
           break;
         default:
 
@@ -72,11 +80,20 @@ app.post('/interactions', async function (req, res) {
     if(name === 'payment'){
       const {name, options} = data.options[0];
       switch (name) {
-        case 'info':
-          await paymentInfo(options, res);
+        case 'balance':
+          await paymentBalance({options, member}, res);
           break;
         case 'address':
-          await paymentAddress(options, res);
+          await paymentAddress({options, member}, res);
+          break;
+        case 'enddate':
+          await paymentEndDate({options, member}, res);
+          break;
+        case 'paysol':
+          await paymentSol({options, member}, res);
+          break;
+        case 'payseigma':
+          await paymentSeigma({options, member}, res);
           break;
         default:
           break;
@@ -84,6 +101,9 @@ app.post('/interactions', async function (req, res) {
     }
   }
 });
+
+// mongodb connection
+initDB();
 
 app.listen(PORT, () => {
   console.log('Listening on port', PORT);

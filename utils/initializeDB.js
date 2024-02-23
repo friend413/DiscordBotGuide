@@ -1,8 +1,8 @@
-const mongoose = require('mongoose'),
-    bcrypt = require('bcryptjs');
-const userModel = require('../models/userModel');
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
-exports.init = async () => {
+import { User } from '../models/userModel.js';
+export const initDB = async () => {
     mongoose.connect(process.env.DATABASE_URI, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
@@ -10,32 +10,29 @@ exports.init = async () => {
     .then(() => {
         console.log('Connected to MongoDB');
 
-        userModel.findOne( {role: "admin"} )
+        User.findOne( {isAdmin: true} )
             .then(async (rlt) => {
                 if( rlt != null )
                     console.log(`${rlt} admin exists already.`)
                 else{
-                    const admin = new userModel({
-                        firstName: 'Olivia',
-                        lastName: 'Fhyre',
-                        email: 'abc@gmail.com',
-                        role: 'admin',
-                        password: await bcrypt.hash('123', 10)
+                    const admin = new User({
+                        
                     });
-                    console.log(bcrypt.hash('123', 10))
-                    userModel.create(admin)
+                    User.create(admin)
                         .then(rlt => {
                             console.log(`${admin} is created as a admin.`)
                         })
                         .catch(err => {
                             console.log(`Can't create admin.`)
-                            process.exit(0);
+                            // process.exit(0);
                         })
                 }
             })
             .catch(err => {
                 console.log(err)
             })
+
+
     })
     .catch((error) => {
         console.error('Error connecting to MongoDB:', error);
