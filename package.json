@@ -16,6 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "@cosmjs/proto-signing": "^0.32.2",
+    "@cosmjs/stargate": "^0.32.2",
     "@sei-js/core": "^3.2.1",
     "@sei-js/react": "^3.2.0",
     "bcrypt": "^5.1.1",

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-
-import { getCosmWasmClient, getQueryClient, getSigningClient, getSigningCosmWasmClient } from '@sei-js/core';
+import { getCosmWasmClient, getQueryClient, getSigningClient } from '@sei-js/core';
+import { StargateClient } from '@cosmjs/stargate'; 
 import {
     InteractionType,
     InteractionResponseType,
@@ -143,11 +143,27 @@ export const paymentBalance = async (req, res) => {
                             throw err;
                         })
                 }
-                
+                const client = await StargateClient.connect(process.env.RPCURL);
+
+                // Fetch the balance
+                const balance = await client.getAllBalances(item.payment.address);
+                const seigmaBalance = await client.getBalance(item.payment.address, process.env.DENOM)
+                // Assuming the native token is what you're interested in, and it's the first in the list
+                let rlt = "";
+                if (balance.length > 0) {
+                    const nativeToken = balance.find((ele) => ele.denom === 'usei');
+                    let divisionNum = 1;
+                    for (let index = 0; index < process.env.SEIGMADECIMAL; index++) {
+                        divisionNum = divisionNum * 10;
+                    }
+                    rlt = `Wallet "${item.payment.address}".\r\n SEI amount: ${parseInt(nativeToken?.amount)/1000000.0}, SEIGMA amount: ${parseInt(seigmaBalance.amount)/(divisionNum*1.0)}.`
+                } else {
+                    rlt = `Wallet "${item.payment.address}".\r\n SEI amount: 0, SEIGMA amount: ${parseInt(seigmaBalance.amount)/(divisionNum*1.0)}.`
+                }
                 return res.send({
                     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                     data: {
-                        content: `Balance function is not completed."`,
+                        content: rlt,
                     },
                 });
             })
