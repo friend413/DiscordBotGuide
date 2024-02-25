@@ -57,6 +57,14 @@ export const whitelistAdd = async (req, res) => {
                             throw err;
                         })
                 }
+                if( item.ip_address[0] == ipAddress || item.ip_address[1] == ipAddress ){
+                    return res.send({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: {
+                            content: `Already IP "${ipAddress}" is registered.`,
+                        },
+                    })
+                }
                 if( item.ip_address[0] != null && item.ip_address[1] != null ){
                     return res.send({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import bodyParser from 'body-parser';
 import express from 'express';
 import {
   InteractionType,
@@ -24,7 +25,7 @@ app.use(express.json({ verify: VerifyDiscordRequest(process.env.PUBLIC_KEY) }));
  */
 app.post('/interactions', async function (req, res) {
   // Interaction type and data
-  const { type, id, data, member } = req.body;
+  const { type, id, data, member, token } = req.body; 
   /**
    * Handle verification requests
    */
@@ -90,10 +91,10 @@ app.post('/interactions', async function (req, res) {
           await paymentEndDate({options, member}, res);
           break;
         case 'paysol':
-          await paymentSol({options, member}, res);
+          await paymentSol({options, member, token}, res);
           break;
         case 'payseigma':
-          await paymentSeigma({options, member}, res);
+          await paymentSeigma({options, member, token}, res);
           break;
         default:
           break;
