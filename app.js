@@ -14,7 +14,6 @@ import { VerifyDiscordRequest, getRandomEmoji, DiscordRequest } from './utils.js
 import { paymentAddress, paymentBalance, paymentEndDate, paymentSei, paymentSeigma } from './controllers/paymentCtrl.js';
 import { whitelistAdd, whitelistReset, whitelistRemove, whitelistShow } from './controllers/whitelistCtrl.js';
 import { initDB } from './utils/initializeDB.js';
-import { ROLES } from './utils/constants.js';
 import { User } from './models/userModel.js'; 
 import { deleteIP } from './utils/ufw.js';
 
@@ -109,7 +108,9 @@ app.post('/interactions', async function (req, res) {
         },
       });
     }
-    if( member.roles.includes(ROLES['nftHolder']) == false ){
+    console.log(process.env.NFTROLEID)
+    console.log(member.roles.includes(process.env.NFTROLEID));
+    if( member.roles.includes(process.env.NFTROLEID) == false ){
         return res.send({
             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
             data: {
