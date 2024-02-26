@@ -165,7 +165,7 @@ export const paymentBalance = async (req, res) => {
 
                 // Fetch the balance
                 const balance = await client.getAllBalances(item.payment.address);
-                const seigmaBalance = await client.getBalance(item.payment.address, process.env.DENOM)
+                const seigmaBalance = await client.getBalance(item.payment.address, process.env.SEIGMATOKENDENOM)
                 // Assuming the native token is what you're interested in, and it's the first in the list
                 let rlt = "";
                 let divisionNum = 1;
