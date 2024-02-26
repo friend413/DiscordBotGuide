@@ -141,7 +141,7 @@ app.post('/interactions', async function (req, res) {
       const {name, options} = data.options[0];
       switch (name) {
         case 'balance':
-          await paymentBalance({options, member}, res);
+          await paymentBalance({options, member, token}, res);
           break;
         case 'address':
           await paymentAddress({options, member}, res);

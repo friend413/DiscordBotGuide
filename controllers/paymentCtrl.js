@@ -156,6 +156,11 @@ export const paymentBalance = async (req, res) => {
                             throw err;
                         })
                 }
+                const response = {
+                    type: 5 // ACK with source
+                };
+        
+                res.json(response);
                 const client = await StargateClient.connect(process.env.RPCURL);
 
                 // Fetch the balance
@@ -167,18 +172,30 @@ export const paymentBalance = async (req, res) => {
                 for (let index = 0; index < process.env.SEIGMADECIMAL; index++) {
                     divisionNum = divisionNum * 10;
                 }
+                let messageData = {
+                    content: "This is a follow-up message!",
+                };
                 if (balance.length > 0) {
                     const nativeToken = balance.find((ele) => ele.denom === 'usei');
-                    rlt = `Wallet "${item.payment.address}".\r\n SEI amount: ${parseInt(nativeToken?.amount)/1000000.0}, SEIGMA amount: ${parseInt(seigmaBalance.amount)/(divisionNum*1.0)}.`
+                    messageData.content = `Wallet "${item.payment.address}".\r\n SEI amount: ${parseInt(nativeToken?.amount)/1000000.0}, SEIGMA amount: ${parseInt(seigmaBalance.amount)/(divisionNum*1.0)}.`
                 } else {
-                    rlt = `Wallet "${item.payment.address}".\r\n SEI amount: 0, SEIGMA amount: ${parseInt(seigmaBalance.amount)/(divisionNum*1.0)}.`
+                    messageData.content = `Wallet "${item.payment.address}".\r\n SEI amount: 0, SEIGMA amount: ${parseInt(seigmaBalance.amount)/(divisionNum*1.0)}.`
                 }
-                return res.send({
-                    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-                    data: {
-                        content: rlt,
+                console.log(messageData);
+                const applicationId = process.env.APP_ID;
+                const interactionToken = req.token;
+                const token = process.env.DISCORD_TOKEN;
+                console.log(applicationId, interactionToken, token);
+                console.log(`https://discord.com/api/v8/webhooks/${applicationId}/${interactionToken}`);
+                fetch(`https://discord.com/api/v8/webhooks/${applicationId}/${interactionToken}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bot ${token}`,
+                        'Content-Type': 'application/json',
                     },
-                });
+                    body: JSON.stringify(messageData),
+                }).then(response => response.json())
+                .catch(err => console.log(err))
             })
     } catch (error) {
         throw error;
