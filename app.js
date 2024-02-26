@@ -11,7 +11,7 @@ import {
   ButtonStyleTypes,
 } from 'discord-interactions';
 import { VerifyDiscordRequest, getRandomEmoji, DiscordRequest } from './utils.js';
-import { paymentAddress, paymentBalance, paymentEndDate, paymentSol, paymentSeigma } from './controllers/paymentCtrl.js';
+import { paymentAddress, paymentBalance, paymentEndDate, paymentSei, paymentSeigma } from './controllers/paymentCtrl.js';
 import { whitelistAdd, whitelistReset, whitelistRemove, whitelistShow } from './controllers/whitelistCtrl.js';
 import { initDB } from './utils/initializeDB.js';
 import { ROLES } from './utils/constants.js';
@@ -26,18 +26,16 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 
   // Schedule a task to run every day at 10:00 AM
-  cron.schedule('0 9 * * *', async () => {
+  cron.schedule('21 18 * * *', async () => {
     const today = new Date();
     const deadlineThreshold = new Date(today);
     deadlineThreshold.setDate(today.getDate() + 5);
-    console.log(deadlineThreshold)
     const usersToNotify = await User.find({
       "payment.endDate": {
         $gte: today,
         $lt: deadlineThreshold
       }
     });
-    console.log( usersToNotify )
     usersToNotify.forEach(async (user) => {
       try {
         const userDiscord = await client.users.fetch(user.id);
@@ -47,16 +45,19 @@ client.on('ready', () => {
         console.error(`Failed to send DM to user ${user.discordId}: ${error}`);
       }
     });
-
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
     const blacklist = await User.find({
       "payment.endDate": {
-        $gt: today
+        $gt: yesterday,
+        $lte: today
       }
     });
     blacklist.forEach(async (user) => {
       try{
-        user.payment.address.forEach(element => {
-          deleteIP(element)
+        user.ip_address.forEach(element => {
+          if(element)
+            deleteIP(element)
         });
       }
       catch(error){
@@ -148,8 +149,8 @@ app.post('/interactions', async function (req, res) {
         case 'enddate':
           await paymentEndDate({options, member}, res);
           break;
-        case 'paysol':
-          await paymentSol({options, member, token}, res);
+        case 'paysei':
+          await paymentSei({options, member, token}, res);
           break;
         case 'payseigma':
           await paymentSeigma({options, member, token}, res);

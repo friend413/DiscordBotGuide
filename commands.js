@@ -105,8 +105,8 @@ const PAYMENT_COMMAND = {
       type: 1,
     },
     {
-      name: 'paysol',
-      description: 'Pay with Sol',
+      name: 'paysei',
+      description: 'Pay with Sei',
       type: 1,
     },
     {

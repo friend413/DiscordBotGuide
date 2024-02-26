@@ -233,8 +233,12 @@ export const whitelistReset = async (req, res) => {
                         },
                     })
                 }
-                item.payment.address.forEach(element => {
-                    deleteIP(element)
+                console.log(item.ip_address);
+                item.ip_address?.forEach(element => {
+                    if(element){
+                        console.log(element);
+                        deleteIP(element)
+                    }
                 });
                 let newIPaddress = [null, null];
                 User.updateOne({_id: item._id}, {ip_address: newIPaddress})

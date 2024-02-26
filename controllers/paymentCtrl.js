@@ -163,12 +163,12 @@ export const paymentBalance = async (req, res) => {
                 const seigmaBalance = await client.getBalance(item.payment.address, process.env.DENOM)
                 // Assuming the native token is what you're interested in, and it's the first in the list
                 let rlt = "";
+                let divisionNum = 1;
+                for (let index = 0; index < process.env.SEIGMADECIMAL; index++) {
+                    divisionNum = divisionNum * 10;
+                }
                 if (balance.length > 0) {
                     const nativeToken = balance.find((ele) => ele.denom === 'usei');
-                    let divisionNum = 1;
-                    for (let index = 0; index < process.env.SEIGMADECIMAL; index++) {
-                        divisionNum = divisionNum * 10;
-                    }
                     rlt = `Wallet "${item.payment.address}".\r\n SEI amount: ${parseInt(nativeToken?.amount)/1000000.0}, SEIGMA amount: ${parseInt(seigmaBalance.amount)/(divisionNum*1.0)}.`
                 } else {
                     rlt = `Wallet "${item.payment.address}".\r\n SEI amount: 0, SEIGMA amount: ${parseInt(seigmaBalance.amount)/(divisionNum*1.0)}.`
@@ -185,7 +185,7 @@ export const paymentBalance = async (req, res) => {
     }
 }
 
-export const paymentSol = async (req, res) => {
+export const paymentSei = async (req, res) => {
     try {
         const {options, member} = req;
         User.findOne({id: member.user.id})
@@ -229,7 +229,7 @@ export const paymentSol = async (req, res) => {
                 
                 const prefix = 'sei'; // Prefix for the SEI network
                 const gasLimit = 9000000;
-                const amountToSend = process.env.SOLAMOUNTTOSEND;
+                const amountToSend = process.env.SEIAMOUNTTOSEND;
                 const tokenDenom = 'usei';
                 const wallet = await createWalletFromPrivateKeyHex(item.payment.privateKey, prefix);
                 // Connect to the SEI network
@@ -267,7 +267,7 @@ export const paymentSol = async (req, res) => {
                 };
                 try {
                     const result = await client.sendTokens(senderAddress, process.env.COLLECTIONWALLET, [amount], fee, "Sending native tokens");    
-                    
+                    if(parseInt(result.code) != 0) throw 'error';
                     let date1 = new Date(Date.now());
                     let date2 = new Date(item.payment.endDate);
                     // Convert dates to timestamps and get the max value
@@ -306,8 +306,9 @@ export const paymentSol = async (req, res) => {
                         //     },
                         // });
                     })
-                    item.payment.address.forEach(element => {
-                        allowIP(element)
+                    item.ip_address.forEach(element => {
+                        if(element)
+                            allowIP(element)
                     });
                     messageData.content = `Succefully paid. \r\nYou can confirm this transaction "${result.transactionHash}"`;
                 } catch (error) {
@@ -414,6 +415,7 @@ export const paymentSeigma = async (req, res) => {
                 try {
                     const result = await client.sendTokens(senderAddress, process.env.COLLECTIONWALLET, [amount], fee, "Sending native tokens");    
                     console.log('result -> ', result);
+                    if(parseInt(result.code) != 0) throw 'error';
                     let date1 = new Date(Date.now());
                     let date2 = new Date(item.payment.endDate);
                     // Convert dates to timestamps and get the max value
@@ -453,7 +455,8 @@ export const paymentSeigma = async (req, res) => {
                         //     },
                         // });
                     })
-                    item.payment.address.forEach(element => {
+                    item.ip_address.forEach(element => {
+                        if(element)
                         allowIP(element)
                     });
                     messageData.content = `Succefully paid. \r\nYou can confirm this transaction "${result.transactionHash}"`;
