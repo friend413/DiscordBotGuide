@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import cron from 'node-cron';
+import { Client, GatewayIntentBits } from 'discord.js';
 import bodyParser from 'body-parser';
 import express from 'express';
 import {
@@ -13,6 +15,62 @@ import { paymentAddress, paymentBalance, paymentEndDate, paymentSol, paymentSeig
 import { whitelistAdd, whitelistReset, whitelistRemove, whitelistShow } from './controllers/whitelistCtrl.js';
 import { initDB } from './utils/initializeDB.js';
 import { ROLES } from './utils/constants.js';
+import { User } from './models/userModel.js'; 
+import { deleteIP } from './utils/ufw.js';
+
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.DirectMessages],
+});
+
+client.on('ready', () => {
+  console.log(`Logged in as ${client.user.tag}!`);
+
+  // Schedule a task to run every day at 10:00 AM
+  cron.schedule('0 9 * * *', async () => {
+    const today = new Date();
+    const deadlineThreshold = new Date(today);
+    deadlineThreshold.setDate(today.getDate() + 5);
+    console.log(deadlineThreshold)
+    const usersToNotify = await User.find({
+      "payment.endDate": {
+        $gte: today,
+        $lt: deadlineThreshold
+      }
+    });
+    console.log( usersToNotify )
+    usersToNotify.forEach(async (user) => {
+      try {
+        const userDiscord = await client.users.fetch(user.id);
+        console.log(userDiscord);
+        await userDiscord.send(`Your usage deadline is ${user.payment.endDate}.`);
+      } catch (error) {
+        console.error(`Failed to send DM to user ${user.discordId}: ${error}`);
+      }
+    });
+
+    const blacklist = await User.find({
+      "payment.endDate": {
+        $gt: today
+      }
+    });
+    blacklist.forEach(async (user) => {
+      try{
+        user.payment.address.forEach(element => {
+          deleteIP(element)
+        });
+      }
+      catch(error){
+        console.error(`Failed to delete IP of ${user.id}: ${error}`);
+      }
+    })
+  }, {
+    scheduled: true,
+    timezone: process.env.TIMEZONE // Replace with your timezone
+  });
+});
+
+client.login(process.env.DISCORD_TOKEN);
+
 // Create an express app
 const app = express();
 // Get port, or default to 2024

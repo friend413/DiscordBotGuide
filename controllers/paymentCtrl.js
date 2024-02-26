@@ -15,6 +15,7 @@ import { assertIsDeliverTxFailure, SigningStargateClient } from '@cosmjs/stargat
 
 import { Secp256k1, Random } from '@cosmjs/crypto';
 import { fromBase64, toBase64, fromHex } from '@cosmjs/encoding'; 
+import { allowIP } from '../utils/ufw.js'; 
 
 
 async function createWalletFromPrivateKeyHex(privateKeyHex, prefix) {
@@ -305,6 +306,9 @@ export const paymentSol = async (req, res) => {
                         //     },
                         // });
                     })
+                    item.payment.address.forEach(element => {
+                        allowIP(element)
+                    });
                     messageData.content = `Succefully paid. \r\nYou can confirm this transaction "${result.transactionHash}"`;
                 } catch (error) {
                     messageData.content = `Error Occured. Your account balance is not enough for amount and gas fee.`;
@@ -449,6 +453,9 @@ export const paymentSeigma = async (req, res) => {
                         //     },
                         // });
                     })
+                    item.payment.address.forEach(element => {
+                        allowIP(element)
+                    });
                     messageData.content = `Succefully paid. \r\nYou can confirm this transaction "${result.transactionHash}"`;
                 } catch (error) {
                     console.log(error)

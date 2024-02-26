@@ -9,6 +9,7 @@ import {
 } from 'discord-interactions';
 import { User } from '../models/userModel.js';
 import { getWalletFromPrivateKey, generateRandomHex } from '../utils/makeWallet.js';
+import { allowIP, deleteIP } from '../utils/ufw.js'; 
 
 export const whitelistAdd = async (req, res) => {
     try {
@@ -29,17 +30,13 @@ export const whitelistAdd = async (req, res) => {
                 if( item == null ){
                     const privateKey = generateRandomHex(64);
                     const address = await getWalletFromPrivateKey(privateKey);
-                    let now = new Date();
-                    let current;
-                    if (now.getMonth() == 11) {
-                        current = new Date(now.getFullYear() + 1, 0, now.getDate());
-                    } else {
-                        current = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-                    }
+                    let nextMonthDate = new Date(Date.now());
+                    // Increment the month
+                    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
                     const payment = {
                         address,
                         privateKey,
-                        endDate: current,
+                        endDate: nextMonthDate,
                         balance: 0,
                     }
                     item = new User({
@@ -57,6 +54,18 @@ export const whitelistAdd = async (req, res) => {
                             throw err;
                         })
                 }
+                const date1 = new Date(Date.now());
+                const date2 = new Date(item.payment.endDate);
+
+                if (date1 > date2) {
+                    return res.send({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: {
+                            content: `It has passed its expiration date. Please extend the deadline.`,
+                        },
+                    })
+                }
+                if( item.payment.endDate )
                 if( item.ip_address[0] == ipAddress || item.ip_address[1] == ipAddress ){
                     return res.send({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -78,6 +87,7 @@ export const whitelistAdd = async (req, res) => {
                 else if( item.ip_address[1] == null ) newIPaddress = [ item.ip_address[0], ipAddress ];
                 User.updateOne({_id: item._id}, {ip_address: newIPaddress})
                     .then((rlt) => {
+                        allowIP(ipAddress);
                         return res.send({
                             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                             data: {
@@ -114,17 +124,13 @@ export const whitelistRemove = async (req, res) => {
                 if( item == null ){
                     const privateKey = generateRandomHex(64);
                     const address = await getWalletFromPrivateKey(privateKey);
-                    let now = new Date();
-                    let current;
-                    if (now.getMonth() == 11) {
-                        current = new Date(now.getFullYear() + 1, 0, now.getDate());
-                    } else {
-                        current = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-                    }
+                    let nextMonthDate = new Date(Date.now());
+                    // Increment the month
+                    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
                     const payment = {
                         address,
                         privateKey,
-                        endDate: current,
+                        endDate: nextMonthDate,
                         balance: 0,
                     }
                     item = new User({
@@ -142,6 +148,17 @@ export const whitelistRemove = async (req, res) => {
                             throw err;
                         })
                 }
+                const date1 = new Date(Date.now());
+                const date2 = new Date(item.payment.endDate);
+
+                if (date1 > date2) {
+                    return res.send({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: {
+                            content: `It has passed its expiration date. Please extend the deadline.`,
+                        },
+                    })
+                }
                 if( item.ip_address[0] != ipAddress && item.ip_address[1] != ipAddress ){
                     return res.send({
                         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -155,6 +172,7 @@ export const whitelistRemove = async (req, res) => {
                 if( item.ip_address[1] == ipAddress ) newIPaddress = [ item.ip_address[1], null ];
                 User.updateOne({_id: item._id}, {ip_address: newIPaddress})
                     .then((rlt) => {
+                        deleteIP(ipAddress)
                         return res.send({
                             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
                             data: {
@@ -180,17 +198,13 @@ export const whitelistReset = async (req, res) => {
                 if( item == null ){
                     const privateKey = generateRandomHex(64);
                     const address = await getWalletFromPrivateKey(privateKey);
-                    let now = new Date();
-                    let current;
-                    if (now.getMonth() == 11) {
-                        current = new Date(now.getFullYear() + 1, 0, now.getDate());
-                    } else {
-                        current = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-                    }
+                    let nextMonthDate = new Date(Date.now());
+                    // Increment the month
+                    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
                     const payment = {
                         address,
                         privateKey,
-                        endDate: current,
+                        endDate: nextMonthDate,
                         balance: 0,
                     }
                     item = new User({
@@ -208,6 +222,20 @@ export const whitelistReset = async (req, res) => {
                             throw err;
                         })
                 }
+                const date1 = new Date(Date.now());
+                const date2 = new Date(item.payment.endDate);
+
+                if (date1 > date2) {
+                    return res.send({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: {
+                            content: `It has passed its expiration date. Please extend the deadline.`,
+                        },
+                    })
+                }
+                item.payment.address.forEach(element => {
+                    deleteIP(element)
+                });
                 let newIPaddress = [null, null];
                 User.updateOne({_id: item._id}, {ip_address: newIPaddress})
                     .then((rlt) => {
@@ -236,17 +264,13 @@ export const whitelistShow = async (req, res) => {
                 if( item == null ){
                     const privateKey = generateRandomHex(64);
                     const address = await getWalletFromPrivateKey(privateKey);
-                    let now = new Date();
-                    let current;
-                    if (now.getMonth() == 11) {
-                        current = new Date(now.getFullYear() + 1, 0, now.getDate());
-                    } else {
-                        current = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-                    }
+                    let nextMonthDate = new Date(Date.now());
+                    // Increment the month
+                    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
                     const payment = {
                         address,
                         privateKey,
-                        endDate: current,
+                        endDate: nextMonthDate,
                         balance: 0,
                     }
                     item = new User({
@@ -263,6 +287,16 @@ export const whitelistShow = async (req, res) => {
                         .catch((err) => {
                             throw err;
                         })
+                }
+                const date1 = new Date(Date.now());
+                const date2 = new Date(item.payment.endDate);
+                if (date1 > date2) {
+                    return res.send({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: {
+                            content: `It has passed its expiration date. Please extend the deadline.`,
+                        },
+                    })
                 }
                 let newIPaddress = [];
                 if( item.ip_address[0] != null ) newIPaddress.push(item.ip_address[0]);
