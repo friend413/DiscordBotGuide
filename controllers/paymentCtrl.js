@@ -185,8 +185,6 @@ export const paymentBalance = async (req, res) => {
                 const applicationId = process.env.APP_ID;
                 const interactionToken = req.token;
                 const token = process.env.DISCORD_TOKEN;
-                console.log(applicationId, interactionToken, token);
-                console.log(`https://discord.com/api/v8/webhooks/${applicationId}/${interactionToken}`);
                 fetch(`https://discord.com/api/v8/webhooks/${applicationId}/${interactionToken}`, {
                     method: 'POST',
                     headers: {
